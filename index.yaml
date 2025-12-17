@@ -3,26 +3,22 @@ entries:
   openllm-oneshot:
   - apiVersion: v2
     appVersion: 0.5.0
-    created: "2025-12-18T01:38:06.670732+05:30"
-    description: One-shot LLM deployment on Kubernetes using BentoML/OpenLLM - helm
-      install and serve
-    digest: 26e170cd77a5ad2c0e1af55d11960640dcfebc9190124131587e47d6619a4d87
-    home: https://github.com/bentoml/OpenLLM
+    created: "2025-12-18T01:40:56.31225+05:30"
+    description: Deploy LLMs on Kubernetes with BentoML/OpenLLM
+    digest: 32d89a0c558d2e9dcd7f10b003ddf0403c66f77c0acd1a39b809f68d70e3b527
+    home: https://github.com/sokryptk/openllm-oneshot
     keywords:
     - llm
-    - ml
-    - ai
-    - bentoml
     - openllm
+    - bentoml
     - inference
-    - model-serving
     maintainers:
     - name: sokryptk
     name: openllm-oneshot
     sources:
-    - https://github.com/bentoml/OpenLLM
+    - https://github.com/sokryptk/openllm-oneshot
     type: application
     urls:
     - https://sokryptk.github.io/openllm-oneshot/openllm-oneshot-0.1.0.tgz
     version: 0.1.0
-generated: "2025-12-18T01:38:06.669868+05:30"
+generated: "2025-12-18T01:40:56.308606+05:30"
