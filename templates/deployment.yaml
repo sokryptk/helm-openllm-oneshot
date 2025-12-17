@@ -146,7 +146,7 @@ spec:
             {{- toYaml $resources | nindent 12 }}
           volumeMounts:
             - name: model-cache
-              mountPath: /home/bentoml/.cache
+              mountPath: /data
             - name: shm
               mountPath: /dev/shm
             {{- if and (eq .Values.model.source "local") .Values.localModel.existingClaim }}

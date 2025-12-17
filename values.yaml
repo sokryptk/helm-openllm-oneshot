@@ -18,8 +18,8 @@ localModel:  # for local source
   existingClaim: ""
 
 image:
-  repository: ghcr.io/bentoml/openllm
-  tag: "0.5.0"
+  repository: ghcr.io/sokryptk/openllm-base
+  tag: "0.1.0"
   pullPolicy: IfNotPresent
 
 imagePullSecrets: []
