@@ -11,6 +11,6 @@ keywords:
   - inference
 maintainers:
   - name: sokryptk
-home: https://github.com/sokryptk/openllm-oneshot
+home: https://github.com/sokryptk/helm-openllm-oneshot
 sources:
-  - https://github.com/sokryptk/openllm-oneshot
+  - https://github.com/sokryptk/helm-openllm-oneshot
