@@ -1,0 +1,194 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "openllm-oneshot.fullname" . }}
+  labels:
+    {{- include "openllm-oneshot.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "openllm-oneshot.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "openllm-oneshot.labels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "openllm-oneshot.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: openllm
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            {{- include "openllm-oneshot.args" . | nindent 12 }}
+          ports:
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+          env:
+            - name: OPENLLM_HOST
+              value: "0.0.0.0"
+            - name: OPENLLM_PORT
+              value: "3000"
+            {{- if .Values.server.corsOrigins }}
+            - name: OPENLLM_CORS_ORIGINS
+              value: {{ .Values.server.corsOrigins | quote }}
+            {{- end }}
+            {{- if or .Values.huggingface.existingSecret .Values.huggingface.token }}
+            - name: HF_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "openllm-oneshot.hfSecretName" . }}
+                  key: {{ .Values.huggingface.secretKey }}
+            {{- end }}
+            {{- /* S3 Configuration */}}
+            {{- if eq .Values.model.source "s3" }}
+            {{- if .Values.objectStorage.endpoint }}
+            - name: AWS_ENDPOINT_URL
+              value: {{ .Values.objectStorage.endpoint | quote }}
+            {{- end }}
+            {{- if .Values.objectStorage.region }}
+            - name: AWS_DEFAULT_REGION
+              value: {{ .Values.objectStorage.region | quote }}
+            {{- end }}
+            {{- if .Values.objectStorage.existingSecret }}
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.objectStorage.existingSecret }}
+                  key: accessKey
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.objectStorage.existingSecret }}
+                  key: secretKey
+            {{- else if .Values.objectStorage.accessKey }}
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "openllm-oneshot.fullname" . }}-s3
+                  key: accessKey
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "openllm-oneshot.fullname" . }}-s3
+                  key: secretKey
+            {{- end }}
+            {{- end }}
+            {{- /* GCS Configuration */}}
+            {{- if eq .Values.model.source "gcs" }}
+            {{- if .Values.objectStorage.existingSecret }}
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: /var/secrets/google/key.json
+            {{- end }}
+            {{- end }}
+            {{- with .Values.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- with .Values.extraEnvFrom }}
+          envFrom:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.probes.liveness.enabled }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: {{ .Values.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.liveness.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.liveness.timeoutSeconds }}
+            failureThreshold: {{ .Values.probes.liveness.failureThreshold }}
+          {{- end }}
+          {{- if .Values.probes.readiness.enabled }}
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.readiness.timeoutSeconds }}
+            failureThreshold: {{ .Values.probes.readiness.failureThreshold }}
+          {{- end }}
+          {{- if .Values.probes.startup.enabled }}
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: {{ .Values.probes.startup.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.startup.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.startup.timeoutSeconds }}
+            failureThreshold: {{ .Values.probes.startup.failureThreshold }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: model-cache
+              mountPath: /home/bentoml/.cache
+            - name: shm
+              mountPath: /dev/shm
+            {{- if and (eq .Values.model.source "local") .Values.localModel.existingClaim }}
+            - name: local-model
+              mountPath: {{ .Values.localModel.mountPath }}
+              readOnly: true
+            {{- end }}
+            {{- if and (eq .Values.model.source "gcs") .Values.objectStorage.existingSecret }}
+            - name: gcs-credentials
+              mountPath: /var/secrets/google
+              readOnly: true
+            {{- end }}
+      volumes:
+        - name: model-cache
+          {{- if .Values.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ include "openllm-oneshot.pvcName" . }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+        - name: shm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 2Gi
+        {{- if and (eq .Values.model.source "local") .Values.localModel.existingClaim }}
+        - name: local-model
+          persistentVolumeClaim:
+            claimName: {{ .Values.localModel.existingClaim }}
+        {{- end }}
+        {{- if and (eq .Values.model.source "gcs") .Values.objectStorage.existingSecret }}
+        - name: gcs-credentials
+          secret:
+            secretName: {{ .Values.objectStorage.existingSecret }}
+        {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

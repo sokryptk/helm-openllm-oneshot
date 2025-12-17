@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "openllm-oneshot.fullname" . }}
+  labels:
+    {{- include "openllm-oneshot.labels" . | nindent 4 }}
+data:
+  MODEL_ID: {{ .Values.model.id | quote }}
+  MODEL_BACKEND: {{ .Values.model.backend | quote }}
+  {{- if .Values.model.quantization }}
+  MODEL_QUANTIZATION: {{ .Values.model.quantization | quote }}
+  {{- end }}
+  {{- if .Values.model.maxModelLen }}
+  MODEL_MAX_LEN: {{ .Values.model.maxModelLen | quote }}
+  {{- end }}
+  GPU_ENABLED: {{ .Values.gpu.enabled | quote }}
+  {{- if .Values.gpu.memoryUtilization }}
+  GPU_MEMORY_UTILIZATION: {{ .Values.gpu.memoryUtilization | quote }}
+  {{- end }}
+  SERVER_WORKERS: {{ .Values.server.workers | quote }}
+  SERVER_TIMEOUT: {{ .Values.server.timeout | quote }}
+  {{- if .Values.server.corsOrigins }}
+  CORS_ORIGINS: {{ .Values.server.corsOrigins | quote }}
+  {{- end }}
