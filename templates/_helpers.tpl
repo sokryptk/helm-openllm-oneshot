@@ -102,13 +102,15 @@ Generate OpenLLM command arguments
 {{- if .Values.model.trustRemoteCode }}
 - "--trust-remote-code"
 {{- end }}
-{{- if .Values.gpu.enabled }}
 - "--device"
+{{- if .Values.gpu.enabled }}
 - "cuda"
 {{- if .Values.gpu.memoryUtilization }}
 - "--gpu-memory-utilization"
 - {{ .Values.gpu.memoryUtilization | quote }}
 {{- end }}
+{{- else }}
+- "cpu"
 {{- end }}
 {{- if .Values.server.workers }}
 - "--workers"
