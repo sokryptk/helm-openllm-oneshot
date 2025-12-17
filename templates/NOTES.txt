@@ -1,116 +1,27 @@
-
-================================================================================
-   ___                   _     _     __  __    ___                _       _
-  / _ \ _ __   ___ _ __ | |   | |   |  \/  |  / _ \ _ __   ___  ___| |__   ___ | |_
- | | | | '_ \ / _ \ '_ \| |   | |   | |\/| | | | | | '_ \ / _ \/ __| '_ \ / _ \| __|
- | |_| | |_) |  __/ | | | |___| |___| |  | | | |_| | | | |  __/\__ \ | | | (_) | |_
-  \___/| .__/ \___|_| |_|_____|_____|_|  |_|  \___/|_| |_|\___||___/_| |_|\___/ \__|
-       |_|
-================================================================================
-
-Your OpenLLM deployment is starting!
+{{ .Release.Name }} deployed successfully.
 
 Model: {{ .Values.model.id }}
 Backend: {{ .Values.model.backend }}
-{{- if .Values.model.quantization }}
-Quantization: {{ .Values.model.quantization }}
-{{- end }}
-
-================================================================================
-ACCESSING YOUR LLM
-================================================================================
 
 {{- if eq .Values.service.type "LoadBalancer" }}
 
-Get the external IP address:
-
-  export LLM_IP=$(kubectl get svc {{ include "openllm-oneshot.fullname" . }} \
-    --namespace {{ .Release.Namespace }} \
-    -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-  echo "OpenLLM is available at: http://$LLM_IP:{{ .Values.service.port }}"
+Get endpoint:
+  kubectl get svc {{ include "openllm-oneshot.fullname" . }} -n {{ .Release.Namespace }} -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
 
 {{- else if eq .Values.service.type "NodePort" }}
 
-Get the NodePort:
-
-  export NODE_PORT=$(kubectl get svc {{ include "openllm-oneshot.fullname" . }} \
-    --namespace {{ .Release.Namespace }} \
-    -o jsonpath='{.spec.ports[0].nodePort}')
+Get endpoint:
+  export NODE_PORT=$(kubectl get svc {{ include "openllm-oneshot.fullname" . }} -n {{ .Release.Namespace }} -o jsonpath='{.spec.ports[0].nodePort}')
   export NODE_IP=$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[0].address}')
-  echo "OpenLLM is available at: http://$NODE_IP:$NODE_PORT"
+  echo $NODE_IP:$NODE_PORT
 
 {{- else }}
 
-Port-forward to access locally:
-
-  kubectl port-forward svc/{{ include "openllm-oneshot.fullname" . }} 3000:{{ .Values.service.port }} \
-    --namespace {{ .Release.Namespace }}
-  echo "OpenLLM is available at: http://localhost:3000"
+Port-forward:
+  kubectl port-forward svc/{{ include "openllm-oneshot.fullname" . }} 3000:{{ .Values.service.port }} -n {{ .Release.Namespace }}
 
 {{- end }}
 
-================================================================================
-API USAGE
-================================================================================
-
-OpenAI-compatible API:
-
-  curl http://$LLM_IP:{{ .Values.service.port }}/v1/chat/completions \
-    -H "Content-Type: application/json" \
-    -d '{
-      "model": "{{ .Values.model.id }}",
-      "messages": [{"role": "user", "content": "Hello!"}],
-      "max_tokens": 256
-    }'
-
-List models:
-
-  curl http://$LLM_IP:{{ .Values.service.port }}/v1/models
-
-Health check:
-
-  curl http://$LLM_IP:{{ .Values.service.port }}/health
-
-================================================================================
-SCALING
-================================================================================
-
-{{- if .Values.autoscaling.enabled }}
-
-HPA is enabled:
-  - Min replicas: {{ .Values.autoscaling.minReplicas }}
-  - Max replicas: {{ .Values.autoscaling.maxReplicas }}
-  - CPU target: {{ .Values.autoscaling.targetCPUUtilizationPercentage }}%
-  - Memory target: {{ .Values.autoscaling.targetMemoryUtilizationPercentage }}%
-
-Check HPA status:
-  kubectl get hpa {{ include "openllm-oneshot.fullname" . }} --namespace {{ .Release.Namespace }}
-
-{{- else }}
-
-Manual scaling:
-  kubectl scale deployment {{ include "openllm-oneshot.fullname" . }} \
-    --namespace {{ .Release.Namespace }} \
-    --replicas=3
-
-To enable autoscaling, upgrade with:
-  helm upgrade {{ .Release.Name }} openllm-oneshot \
-    --set autoscaling.enabled=true \
-    --set autoscaling.minReplicas=1 \
-    --set autoscaling.maxReplicas=5
-
-{{- end }}
-
-================================================================================
-MONITORING
-================================================================================
-
-Check pod status:
-  kubectl get pods -l "app.kubernetes.io/name={{ include "openllm-oneshot.name" . }}" \
-    --namespace {{ .Release.Namespace }}
-
-View logs:
-  kubectl logs -f deployment/{{ include "openllm-oneshot.fullname" . }} \
-    --namespace {{ .Release.Namespace }}
-
-================================================================================
+Test:
+  curl http://<endpoint>/v1/chat/completions -H "Content-Type: application/json" \
+    -d '{"model":"{{ .Values.model.id }}","messages":[{"role":"user","content":"hi"}]}'
