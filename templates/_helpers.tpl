@@ -85,39 +85,7 @@ Return the PVC name for model cache
 Generate OpenLLM command arguments
 */}}
 {{- define "openllm-oneshot.args" -}}
-- "start"
 - {{ .Values.model.id | quote }}
-{{- if .Values.model.backend }}
-- "--backend"
-- {{ .Values.model.backend | quote }}
-{{- end }}
-{{- if .Values.model.quantization }}
-- "--quantize"
-- {{ .Values.model.quantization | quote }}
-{{- end }}
-{{- if .Values.model.maxModelLen }}
-- "--max-model-len"
-- {{ .Values.model.maxModelLen | quote }}
-{{- end }}
-{{- if .Values.model.trustRemoteCode }}
-- "--trust-remote-code"
-{{- end }}
-- "--device"
-{{- if .Values.gpu.enabled }}
-- "cuda"
-{{- if .Values.gpu.memoryUtilization }}
-- "--gpu-memory-utilization"
-- {{ .Values.gpu.memoryUtilization | quote }}
-{{- end }}
-{{- else }}
-- "cpu"
-{{- end }}
-{{- if .Values.server.workers }}
-- "--workers"
-- {{ .Values.server.workers | quote }}
-{{- end }}
-{{- if .Values.server.maxConcurrentRequests }}
-- "--max-concurrent-requests"
-- {{ .Values.server.maxConcurrentRequests | quote }}
-{{- end }}
+- "--port"
+- "3000"
 {{- end }}
