@@ -3,10 +3,10 @@ entries:
   openllm-oneshot:
   - apiVersion: v2
     appVersion: 0.5.0
-    created: "2025-12-18T01:49:49.818412+05:30"
+    created: "2025-12-18T01:52:04.674956+05:30"
     description: Deploy LLMs on Kubernetes with BentoML/OpenLLM
-    digest: cfb1b383d7cec83618be256d54f2413a09c1206ad2dbf49341680ed46171a3cf
-    home: https://github.com/sokryptk/openllm-oneshot
+    digest: dc92f2646af78b2769b5755911586d18454730ff983f080b9dca9e1dd9a41955
+    home: https://github.com/sokryptk/helm-openllm-oneshot
     keywords:
     - llm
     - openllm
@@ -16,29 +16,9 @@ entries:
     - name: sokryptk
     name: openllm-oneshot
     sources:
-    - https://github.com/sokryptk/openllm-oneshot
+    - https://github.com/sokryptk/helm-openllm-oneshot
     type: application
     urls:
-    - https://sokryptk.github.io/openllm-oneshot/openllm-oneshot-0.2.0.tgz
+    - https://sokryptk.github.io/helm-openllm-oneshot/openllm-oneshot-0.2.0.tgz
     version: 0.2.0
-  - apiVersion: v2
-    appVersion: 0.5.0
-    created: "2025-12-18T01:49:49.816834+05:30"
-    description: Deploy LLMs on Kubernetes with BentoML/OpenLLM
-    digest: 9f76c0156231568f25c9eff147f4945f134995aa880343e5abd21ecd79b9fdcc
-    home: https://github.com/sokryptk/openllm-oneshot
-    keywords:
-    - llm
-    - openllm
-    - bentoml
-    - inference
-    maintainers:
-    - name: sokryptk
-    name: openllm-oneshot
-    sources:
-    - https://github.com/sokryptk/openllm-oneshot
-    type: application
-    urls:
-    - https://sokryptk.github.io/openllm-oneshot/openllm-oneshot-0.1.0.tgz
-    version: 0.1.0
-generated: "2025-12-18T01:49:49.815447+05:30"
+generated: "2025-12-18T01:52:04.669992+05:30"
